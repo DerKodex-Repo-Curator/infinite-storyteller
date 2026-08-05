@@ -78,7 +78,7 @@ def forge_character(
 ) -> game.Character:
     taken_txt = ", ".join(taken) if taken else "(none)"
     prompt = f"""
-You are helping create a Dungeons & Dragons level-1 character for a teen-friendly dark fantasy game.
+You are helping create a level-1 fantasy adventurer for a teen-friendly dark fantasy game.
 
 Player vibe: {vibe}
 Name preference: {name_hint or "(invent a cool fitting name)"}
@@ -101,7 +101,7 @@ Return ONLY valid JSON (no markdown) with this shape:
   "inventory": ["item", "..."]
 }}
 
-Use real 5e skill names. Give 2–3 proficient skills that fit. Inventory should be iconic starter gear.
+Use common fantasy skill names (Stealth, Persuasion, Athletics, etc.). Give 2–3 proficient skills that fit. Inventory should be iconic starter gear.
 """
     raw = game.call_ollama(prompt, model, temperature=0.7, num_predict=550)
     data = game.extract_json_object(raw) or {}
@@ -262,7 +262,7 @@ class InfiniteStorytellerApp(tk.Tk):
         ).pack(anchor="w")
         tk.Label(
             wrap,
-            text=f"Offline D&D adventure · local Ollama DM · GUI v{GUI_VERSION}",
+            text=f"Offline fantasy adventure · local Ollama GM · GUI v{GUI_VERSION}",
             font=self.font_small,
             fg=MUTED,
             bg=BG,
@@ -739,7 +739,7 @@ class InfiniteStorytellerApp(tk.Tk):
                 self.entry.focus_set()
             return
 
-        self.append("Summoning the Dungeon Master…", "meta")
+        self.append("Summoning the Game Master…", "meta")
         self.set_busy(True, "Writing opening scene…")
 
         def work():

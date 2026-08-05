@@ -471,7 +471,7 @@ class TurnEngine(unittest.TestCase):
         self.assertEqual(s.round_num, before_round)
         self.assertEqual(s.pending_actions, before_pending)
         self.assertTrue(any(h.startswith("ASK ") for h in s.history))
-        self.assertTrue(any(h.startswith("DM (aside):") for h in s.history))
+        self.assertTrue(any(h.startswith("GM (aside):") for h in s.history))
 
     def test_ask_dm_empty_blocked(self):
         s = make_state(1)

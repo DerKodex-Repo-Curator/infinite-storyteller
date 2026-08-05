@@ -55,7 +55,7 @@ def forge_character(data: Dict[str, Any], model: str) -> game.Character:
     archetype = str(data.get("archetype", "")).strip()
     taken = ", ".join(str(x) for x in data.get("taken", [])) or "(none)"
     prompt = f"""
-You are helping create a Dungeons & Dragons level-1 character for a teen-friendly dark fantasy game.
+You are helping create a level-1 fantasy adventurer for a teen-friendly dark fantasy game.
 
 Player vibe: {vibe}
 Name preference: {name or "(invent a cool fitting name)"}
@@ -175,7 +175,7 @@ max-width:700px;width:calc(100% - 30px);padding:24px}dialog::backdrop{background
 </style>
 </head>
 <body>
-<header><h1>The Infinite Storyteller</h1><p>Offline D&amp;D adventure · local Ollama DM · Web UI v1</p>
+<header><h1>The Infinite Storyteller</h1><p>Offline fantasy adventure · local Ollama GM · Web UI v1</p>
 <div class="modelbar">
   <label for="modelSelect">Local AI model</label>
   <select id="modelSelect" aria-label="Local AI model"></select>
@@ -261,18 +261,18 @@ max-width:700px;width:calc(100% - 30px);padding:24px}dialog::backdrop{background
           <button onclick="showHelp()" title="Open a short guide to how the game works.">Help</button>
           <button onclick="showSheets()" title="View every hero's full character sheet (stats, skills, gear).">Sheets</button>
           <button onclick="askDM()"
-            title="Ask the DM a clarifying question. Free — does not spend a turn or lock in an action. Type your question in the box first.">Ask DM</button>
+            title="Ask the Game Master a clarifying question. Free — does not spend a turn or lock in an action. Type your question in the box first.">Ask GM</button>
           <button onclick="doAction('I take a careful look around.')"
             title="Spend this hero's action carefully surveying the scene. In party play, this locks Look in for the active hero.">Look</button>
           <button onclick="passTurn()"
-            title="Skip this hero's action for the round. In party play they wait while others act; dying heroes roll a death save instead.">Pass</button>
+            title="Skip this hero's action for the round. In party play they wait while others act; dying heroes roll a dying check instead.">Pass</button>
           <button onclick="saveGame()" title="Save the adventure to a named slot so you can load it later.">Save</button>
           <button onclick="confirmMenu()" title="Return to the main menu. Unsaved progress may be lost — save first!">Menu</button>
         </div>
         <div class="btn-legend" id="btnLegend">
           <strong>Help</strong> — how to play ·
           <strong>Sheets</strong> — view character stats ·
-          <strong>Ask DM</strong> — free clarifying question (no turn spent) ·
+          <strong>Ask GM</strong> — free clarifying question (no turn spent) ·
           <strong>Look</strong> — carefully survey the scene (uses this hero's action) ·
           <strong>Pass</strong> — skip this hero's action this round ·
           <strong>Save</strong> — save the adventure ·
@@ -367,7 +367,7 @@ function addBeat(text,kind){const d=document.createElement('div');d.className='b
   const s=document.getElementById('story');s.appendChild(d);s.scrollTop=s.scrollHeight;}
 function statusIcon(h){return h.status==='dead'?'💀 ':h.status==='down'?'🩸 ':h.status==='stable'?'💤 ':'';}
 function statusNote(h){
-  if(h.status==='down')return `<span style="color:var(--bad)">DYING — death saves ${h.death_successes||0}✓/${h.death_failures||0}✗</span><br>`;
+  if(h.status==='down')return `<span style="color:var(--bad)">DYING — checks ${h.death_successes||0}✓/${h.death_failures||0}✗</span><br>`;
   if(h.status==='stable')return '<span class="muted">Unconscious (stable) — needs healing</span><br>';
   if(h.status==='dead')return '<span style="color:var(--bad)">DEAD</span><br>';
   return '';
@@ -399,7 +399,7 @@ function renderState(){
       if(state.party_mode){
         if(plan==='waiting') planLine='<span style="color:var(--gold)">⏳ writing action…</span><br>';
         else if(plan==='skipping') planLine='<span class="muted">✓ skipping this round</span><br>';
-        else if(plan==='death save') planLine='<span class="muted">✓ death save ready</span><br>';
+        else if(plan==='death save') planLine='<span class="muted">✓ dying check ready</span><br>';
         else if(plan&&plan!=='ok'&&plan!=='down'&&plan!=='stable'&&plan!=='dead')
           planLine=`<span style="color:#9dffa8">✓ ${esc(plan)}</span><br>`;
       }
@@ -422,7 +422,7 @@ function renderState(){
     document.getElementById('btnLegend').innerHTML=
       `<strong>Help</strong> — how to play ·
        <strong>Sheets</strong> — view character stats ·
-       <strong>Ask DM</strong> — free clarifying question (no turn) ·
+       <strong>Ask GM</strong> — free clarifying question (no turn) ·
        <strong>Look</strong> — lock in a careful survey for <em>${esc(state.active)}</em> ·
        <strong>Pass</strong> — ${esc(state.active)} skips this round (others still act) ·
        <strong>Save</strong> — save the adventure ·
@@ -436,7 +436,7 @@ function renderState(){
     document.getElementById('btnLegend').innerHTML=
       `<strong>Help</strong> — how to play ·
        <strong>Sheets</strong> — view character stats ·
-       <strong>Ask DM</strong> — free clarifying question (no turn) ·
+       <strong>Ask GM</strong> — free clarifying question (no turn) ·
        <strong>Look</strong> — carefully survey the scene (uses this turn) ·
        <strong>Pass</strong> — skip this turn ·
        <strong>Save</strong> — save the adventure ·
@@ -502,7 +502,7 @@ async function askDM(){
   const box=document.getElementById('action');
   let q=box.value.trim();
   if(!q){
-    q=prompt('Ask the DM a clarifying question (free — does not spend a turn):','');
+    q=prompt('Ask the Game Master a clarifying question (free — does not spend a turn):','');
     if(!q||!q.trim())return;
     q=q.trim();
   }else{
@@ -510,7 +510,7 @@ async function askDM(){
   }
   selectedModel=document.getElementById('gameModelSelect').value||selectedModel;
   addBeat(`❓ [${state.active} asks] ${q}`,'ask');
-  document.getElementById('gameMessage').innerHTML=`<div class="busy">Asking the DM (${esc(selectedModel)}) — no turn spent…</div>`;
+  document.getElementById('gameMessage').innerHTML=`<div class="busy">Asking the GM (${esc(selectedModel)}) — no turn spent…</div>`;
   const b=document.getElementById('doBtn');b.disabled=true;
   try{
     const d=await api('/api/ask',{question:q,model:selectedModel});
@@ -535,17 +535,17 @@ async function showLoads(){try{const d=await api('/api/saves');if(!d.saves.lengt
   addBeat(`Save loaded · model set to ${selectedModel}.`,'meta');if(x.last) addBeat(x.last,'dm');renderState();}catch(e){alert(e.message)}}
 function showHelp(){document.getElementById('modalBody').innerHTML=`<h2>How to play</h2><p>Type actions in plain English.
   Python decides checks and rolls dice; the local AI narrates. Use the model dropdown before an action to switch local models.</p>
-  <p><strong>Ask DM:</strong> type a clarifying question in the box, then click <em>Ask DM</em>.
+  <p><strong>Ask GM:</strong> type a clarifying question in the box, then click <em>Ask GM</em>.
   This is free — it does not spend a turn or lock in a party action. Use it to clarify
   what you see, hear, or remember. Use <em>Do it / Lock in</em> for real in-world actions.</p>
-  <p><strong>Party play (2–4):</strong> everyone locks in their action first. The DM resolves the whole party's round together.
+  <p><strong>Party play (2–4):</strong> everyone locks in their action first. The GM resolves the whole party's round together.
   Pass means that hero skips this round. Solo play still resolves immediately.</p>
   <p><strong>Rounds &amp; acts:</strong> when every hero has taken a turn, one round passes. The story builds through
   acts toward a final boss or showdown near the chosen adventure length.</p>
-  <p><strong>Going down:</strong> at 0 HP a hero is dying and rolls death saves on their turns
+  <p><strong>Going down:</strong> at 0 HP a hero is dying and rolls dying checks on their turns
   (10+ succeeds; 3 successes = stable, 3 failures = dead). Allies can stabilize (Medicine DC 10) or heal them.
   A natural 20 springs them back up with 1 HP!</p>
-  <div class="sheet">Help · Sheets · Ask DM · Look · Pass · Save
+  <div class="sheet">Help · Sheets · Ask GM · Look · Pass · Save
   \\nAsk examples:\\n• What does the carved symbol on the door look like?\\n• Can I tell if the wolf is still watching us?
   \\nAction examples:\\n• search the room for traps\\n• persuade the guard\\n• attack the goblin with my sword</div>`;
   document.getElementById('modal').showModal();}
@@ -705,7 +705,7 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError("No active adventure")
                 question = str(data.get("question", "")).strip()
                 if not question:
-                    raise ValueError("Type a question for the DM")
+                    raise ValueError("Type a question for the GM")
                 with LOCK:
                     if STATE.game_over:
                         self.send_json({
@@ -761,7 +761,7 @@ class Handler(BaseHTTPRequestHandler):
                 with LOCK:
                     STATE = game.load_game(slot)
                     last = STATE.history[-1] if STATE.history else ""
-                if last.startswith("DM: "):
+                if last.startswith("DM: ") or last.startswith("GM: "):
                     last = last[4:]
                 self.send_json({"state": state_json(STATE), "last": last})
                 return

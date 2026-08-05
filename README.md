@@ -1,13 +1,13 @@
 # The Infinite Storyteller
 
-**Offline Dungeons & Dragons 5e-lite text RPG** for 1–4 players on one computer.
+**Offline fantasy tabletop-style text RPG** for 1–4 players on one computer.
 
-Python owns the rules: character sheets, inventory, HP, dice, death saves, and a fixed
+Python owns the rules: character sheets, inventory, HP, dice, dying checks, and a fixed
 enemy encounter roster. A **local LLM via [Ollama](https://ollama.com)** acts as the
-Dungeon Master — helping forge characters and narrating outcomes. After you download a
+Game Master — helping forge characters and narrating outcomes. After you download a
 model once, the game runs with **no internet**.
 
-> Have fun. Type foolish plans. Roll badly. Ask the DM weird questions.  
+> Have fun. Type foolish plans. Roll badly. Ask the GM weird questions.  
 > And if you improve something — please share it back with the world.
 
 ---
@@ -18,9 +18,9 @@ model once, the game runs with **no internet**.
 - **Web UI** (`gui_web.py`) — local browser app at `http://127.0.0.1:8765`
 - **macOS helpers** — `Infinite Storyteller.app` and `Play Infinite Storyteller.command`
 - **1–4 players** hot-seat: everyone locks in an action, then one shared round resolves
-- **Ask DM** — free clarifying questions (does not spend a turn)
+- **Ask GM** — free clarifying questions (does not spend a turn)
 - **Adventure length** — Short / Standard / Long with act pacing toward a finale
-- **Death & dying** — D&D-style death saves, stabilize, heal, mercy rule
+- **Death & dying** — unconscious at 0 HP, dying checks, stabilize, heal, mercy rule
 - **Tracked fights** — fixed enemy HP roster so battles don’t become “endless wolves”
 - **Model picker** — choose any model installed in Ollama (recommended: `qwen2.5:14b` / `llama3.1:8b`)
 - **Stdlib only** — no `pip install` required
@@ -102,8 +102,8 @@ If macOS refuses the `.app` (especially offline): **Right-click → Open → Ope
 | Piece | Owner | Notes |
 |-------|--------|--------|
 | Ability scores, skills, AC, HP | Python | Always visible on sheets |
-| Inventory | Python | DM may add/remove only via `STATUS` JSON |
-| Dice | **Python only** | Printed: roll + mods vs DC/AC |
+| Inventory | Python | GM may add/remove only via `STATUS` JSON |
+| Dice | **Python only** | Printed: roll + mods vs difficulty / armor |
 | Enemy fights | **Python roster** | Fixed foes + HP; no endless reinforcements |
 | Story / narration | Local LLM | Proposes checks + describes outcomes |
 
@@ -115,8 +115,8 @@ If macOS refuses the `.app` (especially offline): **Right-click → Open → Ope
 4. AI narrates based on that result  
 5. Python applies HP / inventory / location / encounter updates  
 
-**Party play (2–4)** — everyone **locks in** first; then one shared DM reply.  
-**Pass** skips that hero for the round. **Ask DM** never spends a turn.
+**Party play (2–4)** — everyone **locks in** first; then one shared GM reply.  
+**Pass** skips that hero for the round. **Ask GM** never spends a turn.
 
 ---
 
@@ -171,7 +171,7 @@ infinite-storyteller/
 python3 test_game.py
 ```
 
-Covers death saves, party planning, encounter tracking, dice parsing, and API guards — with the LLM stubbed.
+Covers dying checks, party planning, encounter tracking, dice parsing, and API guards — with the LLM stubbed.
 
 ---
 
@@ -213,10 +213,10 @@ Bug reports and ideas via [GitHub Issues](https://github.com/brantley-creator/in
 
 ## Have fun
 
-You are the heroes. The dice are honest. The DM is a laptop that can’t connect to
+You are the heroes. The dice are honest. The storyteller is a laptop that can’t connect to
 the cloud at 30,000 feet — and that’s the point.
 
-**Roll initiative. Tell a story. Invite a friend to the keyboard.**
+**Grab the keyboard. Tell a story. Invite a friend to play.**
 
 ---
 

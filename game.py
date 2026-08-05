@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-The Infinite Storyteller — offline D&D 5e-lite text RPG.
+The Infinite Storyteller — offline fantasy text RPG.
 
 Python owns character sheets, inventory, HP, and all dice rolls.
-The local LLM (Ollama) helps with character creation and narrates outcomes.
+A local LLM (Ollama) helps with character creation and narrates outcomes.
 
   ollama pull qwen2.5:14b
   python3 game.py
@@ -29,7 +29,7 @@ DEFAULT_MODEL = "qwen2.5:14b"
 # Friendly labels for models we recommend. Any other locally installed Ollama
 # model can still be selected in the web UI / passed on the CLI.
 RECOMMENDED_MODELS = {
-    "qwen2.5:14b": "richer DM (slower, ~9 GB)",
+    "qwen2.5:14b": "richer GM (slower, ~9 GB)",
     "llama3.1:8b": "faster backup (~4.9 GB)",
 }
 HISTORY_TURNS = 10
@@ -44,7 +44,7 @@ HELP_TEXT = """
 │ inventory / i         Party inventories
 │ party / status        HP, AC, location, whose turn
 │ look                  Re-describe the scene (uses an action)
-│ ask <question>        Ask the DM a clarifying question (free — no turn)
+│ ask <question>        Ask the Game Master a clarifying question (free — no turn)
 │ history               Show recent story beats
 │
 │ use <name>            Switch whose turn it is
@@ -297,7 +297,7 @@ class Character:
         abs_line = ", ".join(f"{a} {self.abilities[a]}" for a in ABILITIES)
         condition = {
             "ok": "healthy enough to act",
-            "down": "at 0 HP, UNCONSCIOUS and DYING (rolling death saves)",
+            "down": "at 0 HP, UNCONSCIOUS and DYING (rolling dying checks)",
             "stable": "at 0 HP, unconscious but stable (needs healing to wake)",
             "dead": "DEAD",
         }.get(self.status, "")
@@ -447,7 +447,7 @@ class GameState:
             if pending == "__pass__":
                 extra = "  (skipping)"
             elif pending == "__death_save__":
-                extra = "  (death save ready)"
+                extra = "  (dying check ready)"
             elif pending:
                 extra = f"  (locked: {pending[:40]})"
             lines.append(f" {mark} {c.compact()}{extra}")
@@ -462,7 +462,7 @@ class GameState:
         return "\n".join(lines)
 
     def advance_turn(self) -> None:
-        """Move to the next hero who can take a turn (acting or rolling death saves)."""
+        """Move to the next hero who can take a turn (acting or rolling dying checks)."""
         n = len(self.party)
         for step in range(1, n + 1):
             nxt = (self.active_index + step) % n
@@ -835,7 +835,7 @@ def create_character_with_ai(model: str, player_number: int, taken_names: List[s
 
     taken = ", ".join(taken_names) if taken_names else "(none)"
     prompt = f"""
-You are helping create a Dungeons & Dragons level-1 character for a teen-friendly dark fantasy game.
+You are helping create a level-1 fantasy adventurer for a teen-friendly dark fantasy game.
 
 Player vibe: {vibe}
 Name preference: {name_hint or "(invent a cool fitting name)"}
@@ -858,9 +858,9 @@ Return ONLY valid JSON (no markdown) with this shape:
   "inventory": ["item", "..."]
 }}
 
-Use real 5e skill names. Give 2–3 proficient skills that fit. Inventory should be iconic starter gear.
+Use common fantasy skill names (Stealth, Persuasion, Athletics, etc.). Give 2–3 proficient skills that fit. Inventory should be iconic starter gear.
 """
-    print("\nForging character with the local DM...\n")
+    print("\nForging character with the local GM...\n")
     raw = call_ollama(prompt, model, temperature=0.7, num_predict=550)
     data = extract_json_object(raw) or {}
     character = normalize_character(data, fallback_name=name_hint or f"Hero{player_number}")
@@ -902,18 +902,18 @@ Use real 5e skill names. Give 2–3 proficient skills that fit. Inventory should
 # ---------------------------------------------------------------------------
 
 DM_RULES = """\
-You are the Dungeon Master for a collaborative text RPG (teens ~13–15).
+You are the Game Master for a collaborative text RPG (teens ~13–15).
 Tone: cinematic dark fantasy — peril and violence OK, no sexual content.
 
 RULES AUTHORITY:
 - Python owns all dice, HP, inventory, enemy HP, and pass/fail. You never invent roll results.
-- Use D&D 5e-lite: d20 + ability mod (+2 proficiency if skilled) vs DC.
-- Typical DCs: 10 easy, 13 medium, 15 hard, 18 very hard, 20 nearly impossible.
-- Attack rolls vs target AC. Damage only on hit.
+- Use a simple d20 system: d20 + ability mod (+2 proficiency if skilled) vs difficulty class.
+- Typical difficulties: 10 easy, 13 medium, 15 hard, 18 very hard, 20 nearly impossible.
+- Attack rolls vs target armor class. Damage only on hit.
 - Be fair. Reward clever plans. Never decide the player's actions.
 
 LIFE AND DEATH:
-- A hero at 0 HP is unconscious and DYING. Python rolls their death saves.
+- A hero at 0 HP is unconscious and DYING. Python rolls their dying checks.
 - Never kill a hero outright in narration and never narrate actions for a
   downed/unconscious hero — they are helpless until stabilized or healed.
 - Allies can stabilize a dying hero (Medicine, DC 10) or heal them
@@ -1182,7 +1182,7 @@ def apply_encounter_status(state: GameState, status: Dict[str, Any]) -> List[str
     """Handle start_encounter / end_encounter from STATUS. Blocks mid-fight adds."""
     events: List[str] = []
     if status.get("end_encounter") is True:
-        events += end_encounter(state, "DM ended the fight")
+        events += end_encounter(state, "GM ended the fight")
     start = status.get("start_encounter")
     if isinstance(start, dict):
         if state.encounter and state.encounter.living():
@@ -1289,7 +1289,7 @@ Use the active character's actual skills when choosing skill names.
     raw = call_ollama(prompt, model, temperature=0.3, num_predict=280)
     data = extract_json_object(raw)
     if not data:
-        return {"needs_check": False, "reason": "DM could not parse check; narrating freely"}
+        return {"needs_check": False, "reason": "GM could not parse check; narrating freely"}
     return data
 
 
@@ -1342,7 +1342,7 @@ def resolve_check(actor: Character, proposal: dict) -> Tuple[str, Dict[str, Any]
             damage_die = damage_die_only(damage_die)
             dmg_mod = actor.mod(ability)
             if crit:
-                # roll damage dice twice (5e crit) + mod once
+                # roll damage dice twice on a critical hit + mod once
                 a, _ = roll_dice(damage_die)
                 b, _ = roll_dice(damage_die)
                 dmg = a + b + dmg_mod
@@ -1475,7 +1475,7 @@ RECENT STORY:
 
 {roll_block}
 
-Write 2–4 short paragraphs of DM narration. End by prompting what the party does next.
+Write 2–4 short paragraphs of Game Master narration. End by prompting what the party does next.
 Respect inventory, HP, and each hero's Condition. On a failed check, complications happen.
 On success, progress with a cost sometimes. Follow the DIRECTOR'S NOTE for pacing.
 Obey ENCOUNTER STATE — never invent endless reinforcements.
@@ -1523,7 +1523,7 @@ def narrate_party_round(
             blocks.append(f"- {intent['name']} skips this round (no action).")
         elif kind == "death_save":
             blocks.append(
-                f"- {intent['name']} is dying and rolls a death save:\n"
+                f"- {intent['name']} is dying and rolls a dying check:\n"
                 f"  {intent.get('check_text', '')}"
             )
         else:
@@ -1554,12 +1554,12 @@ RECENT STORY:
 
 {action_block}
 
-Write 3–5 short paragraphs of DM narration covering the WHOLE party's round.
+Write 3–5 short paragraphs of Game Master narration covering the WHOLE party's round.
 Interweave their actions (they happen roughly at the same time). Include enemy/
 world reactions once after their moves. End by prompting what the party does next.
 Respect inventory, HP, and each hero's Condition. Follow the DIRECTOR'S NOTE.
 Do not invent different roll results — the ROLL lines above are authoritative.
-Skipped heroes take no action. Dying heroes are rolling death saves, not acting.
+Skipped heroes take no action. Dying heroes are rolling dying checks, not acting.
 Obey ENCOUNTER STATE — never invent endless reinforcements.
 
 When HP/inventory/location change, end with exactly one STATUS line:
@@ -1586,11 +1586,11 @@ def apply_damage(char: Character, amount: int) -> List[str]:
     if amount == 0 or char.status == "dead":
         return events
     if char.status in ("down", "stable"):
-        # Damage while dying counts as a death-save failure (5e-lite).
+        # Damage while dying counts as a dying-check failure.
         char.status = "down"
         char.death_failures += 1
         events.append(
-            f"💔 {char.name} is struck while dying — death-save failure "
+            f"💔 {char.name} is struck while dying — dying-check failure "
             f"{char.death_failures}/3!"
         )
         if char.death_failures >= 3:
@@ -1604,7 +1604,7 @@ def apply_damage(char: Character, amount: int) -> List[str]:
         char.death_failures = 0
         events.append(
             f"😵 {char.name} drops to 0 HP and is DYING! On their turns they roll "
-            f"death saves. An ally can stabilize them (Medicine DC 10) or heal them."
+            f"dying checks. An ally can stabilize them (Medicine DC 10) or heal them."
         )
     return events
 
@@ -1645,7 +1645,7 @@ def death_save(char: Character) -> Tuple[str, List[str]]:
         char.death_successes = 0
         char.death_failures = 0
         return (
-            f"☠ Death save — {char.name}: d20=20 → NATURAL 20! "
+            f"☠ Dying check — {char.name}: d20=20 → NATURAL 20! "
             f"{char.name} surges back to their feet with 1 HP!",
             events,
         )
@@ -1659,7 +1659,7 @@ def death_save(char: Character) -> Tuple[str, List[str]]:
         char.death_failures += 1
         note = "failure"
     text = (
-        f"☠ Death save — {char.name}: d20={natural} → {note} "
+        f"☠ Dying check — {char.name}: d20={natural} → {note} "
         f"(successes {char.death_successes}/3, failures {char.death_failures}/3)"
     )
     if char.death_failures >= 3:
@@ -1790,7 +1790,7 @@ def auto_lock_downed(state: GameState) -> List[str]:
     for c in state.party:
         if c.status == "down" and c.name not in state.pending_actions:
             state.pending_actions[c.name] = "__death_save__"
-            notes.append(f"{c.name} is dying and will roll a death save this round.")
+            notes.append(f"{c.name} is dying and will roll a dying check this round.")
     return notes
 
 
@@ -1806,7 +1806,7 @@ def pending_summary(state: GameState) -> List[Dict[str, str]]:
         elif raw == "__pass__":
             plan = "skipping"
         elif raw == "__death_save__":
-            plan = "death save"
+            plan = "dying check"
         else:
             plan = raw
         rows.append({"name": c.name, "status": c.status, "plan": plan})
@@ -1938,7 +1938,7 @@ def lock_party_choice(
 
     if actor.status == "down":
         state.pending_actions[actor.name] = "__death_save__"
-        msg = f"{actor.name} is dying and will roll a death save this round."
+        msg = f"{actor.name} is dying and will roll a dying check this round."
     elif choice == "__pass__":
         state.pending_actions[actor.name] = "__pass__"
         msg = f"{actor.name} skips this round."
@@ -2003,7 +2003,7 @@ def run_action_turn(state: GameState, actor: Character, action: str, model: str)
             state.advance_turn()
         out.update(
             kind="death_save",
-            message=f"{actor.name} is dying and can only roll a death save.",
+            message=f"{actor.name} is dying and can only roll a dying check.",
             check=text,
             checks=[text],
             events=events,
@@ -2086,12 +2086,12 @@ def ask_dm(
     model: str,
     asker: Optional[Character] = None,
 ) -> Dict[str, Any]:
-    """Free clarifying question for the DM. Does not spend a turn or advance the round."""
+    """Free clarifying question for the Game Master. Does not spend a turn or advance the round."""
     question = (question or "").strip()
     if not question:
         return {
             "kind": "blocked",
-            "message": "Type a question for the DM first.",
+            "message": "Type a question for the GM first.",
             "narrative": "",
         }
     asker = asker or state.active
@@ -2111,7 +2111,7 @@ PARTY:
 RECENT STORY:
 {history}
 
-A PLAYER IS ASKING YOU (THE DM) A CLARIFYING QUESTION — this is NOT a game action.
+A PLAYER IS ASKING YOU (THE GAME MASTER) A CLARIFYING QUESTION — this is NOT a game action.
 Asker: {asker.name}
 Question: {question}
 
@@ -2122,20 +2122,20 @@ RULES FOR YOUR ANSWER:
 - Do NOT invent unseen rooms/loot/enemies unless answering would spoil a secret they
   could not know — in that case say they can't tell from here.
 - If the "question" is clearly an in-world action (attack, sneak, grab, cast…), briefly
-  say they should submit that as an action (Do it / Lock in) instead of Ask DM.
-- Keep it short: 1–2 tight paragraphs, conversational DM voice.
+  say they should submit that as an action (Do it / Lock in) instead of Ask GM.
+- Keep it short: 1–2 tight paragraphs, conversational Game Master voice.
 - Do NOT include a STATUS line. Do not change HP, inventory, or location.
 """
     answer = call_ollama(prompt, model, temperature=0.55, num_predict=280)
     # Strip accidental STATUS lines from chatty models
     answer, _ = parse_status(answer)
     if not answer.strip():
-        answer = "(The DM has nothing further to add right now.)"
+        answer = "(The Game Master has nothing further to add right now.)"
     state.history.append(f"ASK ({asker.name}): {question}")
-    state.history.append(f"DM (aside): {answer}")
+    state.history.append(f"GM (aside): {answer}")
     return {
         "kind": "ask",
-        "message": f"{asker.name} asks the DM (free — no turn spent).",
+        "message": f"{asker.name} asks the GM (free — no turn spent).",
         "narrative": answer,
         "asker": asker.name,
         "question": question,
@@ -2215,7 +2215,7 @@ def startup(model: str) -> Tuple[GameState, bool]:
     """Return (state, needs_opening_scene)."""
     print("=" * 60)
     print("  THE INFINITE STORYTELLER")
-    print("  D&D 5e-lite · local DM · Python rolls the dice")
+    print("  Fantasy RPG · local GM · Python rolls the dice")
     print("=" * 60)
     print()
     print_help()
@@ -2368,7 +2368,7 @@ def main() -> None:
     if needs_opening:
         print(state.banner())
         print("-" * 60)
-        print("Summoning the Dungeon Master...\n")
+        print("Summoning the Game Master...\n")
         narrative, status = narrate(state, state.active, None, model)
         apply_status(state, status)
         print_wrapped(narrative)
@@ -2476,9 +2476,9 @@ def main() -> None:
 
         if cmd == "ask":
             if not arg.strip():
-                print("Usage: ask <your question for the DM>\n")
+                print("Usage: ask <your question for the GM>\n")
                 continue
-            print("\nAsking the DM (free — no turn spent)...\n")
+            print("\nAsking the GM (free — no turn spent)...\n")
             result = ask_dm(state, arg.strip(), model)
             print(result["message"])
             print_wrapped(result["narrative"])
