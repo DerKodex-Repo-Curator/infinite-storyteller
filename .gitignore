@@ -1,0 +1,35 @@
+# Python
+.venv/
+venv/
+env/
+__pycache__/
+.pycache/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# OS / editor
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*~
+
+# Local runtime / personal machine
+saves/*
+!saves/.gitkeep
+launcher.log
+*.log
+.python-version
+.env
+.env.*
+
+# Optional local notes
+TODO.local.md
+notes.local.md

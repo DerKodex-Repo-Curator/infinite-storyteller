@@ -1,0 +1,5 @@
+# The Infinite Storyteller uses only the Python standard library.
+# No pip packages are required to play.
+#
+# Optional for contributors who prefer a virtualenv anyway:
+#   python3 -m venv .venv && source .venv/bin/activate
